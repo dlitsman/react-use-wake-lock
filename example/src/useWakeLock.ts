@@ -34,9 +34,11 @@ export function useWakeLock(enabled: boolean, options?: Options) {
     const wakeLockInFlight = useRef(false);
     const wakeLock = useRef<WakeLockSentinel>();
 
+    const isSupported = ('wakeLock' in navigator);
+
     useEffect(() => {
         // WakeLock is not supported by the browser
-        if (!('wakeLock' in navigator)) {
+        if (!isSupported) {
             return;
         }
 
@@ -69,7 +71,8 @@ export function useWakeLock(enabled: boolean, options?: Options) {
     }, [enabled, isVisible, setIsLocked]);
 
     return useMemo(() => ({
+        isSupported,
         locked,
-    }), [wakeLock, locked])
+    }), [locked])
 
 }
