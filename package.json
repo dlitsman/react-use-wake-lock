@@ -1,0 +1,29 @@
+{
+  "name": "react-wake-lock",
+  "version": "0.0.1",
+  "description": "React hooks to make it easier to use Screen Wake Lock API",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dlitsman/react-wake-lock.git"
+  },
+  "keywords": [
+    "react",
+    "wakelock",
+    "Screen",
+    "Wake",
+    "Lock"
+  ],
+  "author": "Dmitrii Litsman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dlitsman/react-wake-lock/issues"
+  },
+  "homepage": "https://github.com/dlitsman/react-wake-lock#readme"
+}
