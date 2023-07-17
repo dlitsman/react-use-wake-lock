@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function useVisibilityObserver() {
   const [isVisible, setIsVisible] = useState<boolean>(
@@ -6,7 +6,6 @@ function useVisibilityObserver() {
   );
 
   const handleVisiblilityChange = useCallback(() => {
-    console.log('!!!visibility changed')
     setIsVisible(document.visibilityState === "visible");
   }, [])
 
@@ -21,11 +20,19 @@ function useVisibilityObserver() {
   return isVisible;
 }
 
-export function useWakeLock(enabled: true) {
+
+type Options = {
+    onError: (err: Error, flow: 'request' | 'release') => void,
+    onLock: (lock: WakeLockSentinel) => void,
+    onRelease: (lock: WakeLockSentinel) => void,
+}
+
+export function useWakeLock(enabled: boolean, options?: Options) {
     const isVisible = useVisibilityObserver();
-    const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null)
+    const [locked, setIsLocked] = useState(false);
 
     const wakeLockInFlight = useRef(false);
+    const wakeLock = useRef<WakeLockSentinel>();
 
     useEffect(() => {
         // WakeLock is not supported by the browser
@@ -33,39 +40,36 @@ export function useWakeLock(enabled: true) {
             return;
         }
 
-        // no-op as we don't want to take lock if condition is not met
-        if (!enabled || !isVisible) {
-            return;
+        if (enabled && isVisible && wakeLockInFlight.current === false) {
+            wakeLockInFlight.current = true;
+
+            navigator.wakeLock.request('screen').then((lock) => {
+                lock.addEventListener('release', () => {
+                    setIsLocked(false);
+                    options?.onRelease(lock);
+                });
+                wakeLock.current = lock;
+                setIsLocked(true);
+                options?.onLock(lock);
+            }).catch(e => {
+                options?.onError(e, 'request')
+            }).finally(() => {
+                wakeLockInFlight.current = false;
+            })
         }
-
-        // We already have requested access and waiting from the browser
-        if (wakeLockInFlight.current === true) {
-            return;
-        }
-
-        wakeLockInFlight.current = true;
-        let effectWakeLock: WakeLockSentinel;
-
-        navigator.wakeLock.request('screen').then((lock) => {
-            console.log('!!!Got lock')
-            effectWakeLock = lock;
-            setWakeLock(lock);
-        }).finally(() => {
-            wakeLockInFlight.current = false;
-        })
 
         return () => {
-            if (effectWakeLock != null && effectWakeLock.released !== true) {
-                effectWakeLock.release().catch((e) => {
-                    console.error('!!!Error', e)
+            if (wakeLock.current != null && wakeLock.current.released !== true) {
+                wakeLock.current.release().catch((e) => {
+                    options?.onError(e, 'release');
                 })
             }
         }
 
-    }, [enabled, isVisible]);
+    }, [enabled, isVisible, setIsLocked]);
 
-    return {
-        wakeLock,
-    }
+    return useMemo(() => ({
+        locked,
+    }), [wakeLock, locked])
 
 }
