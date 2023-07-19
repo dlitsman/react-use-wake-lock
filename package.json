@@ -1,5 +1,5 @@
 {
-  "name": "react-wake-lock",
+  "name": "react-use-wake-lock",
   "version": "0.0.2",
   "description": "React hooks to make it easier to use Screen Wake Lock API",
   "main": "index.js",
@@ -20,6 +20,11 @@
     "Wake",
     "Lock"
   ],
+  "files": [
+    "src",
+    "dist"
+  ],
+  "source": "src/index.ts",
   "author": "Dmitrii Litsman",
   "license": "MIT",
   "bugs": {
