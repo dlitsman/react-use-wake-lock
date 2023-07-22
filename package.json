@@ -2,12 +2,15 @@
   "name": "react-use-wake-lock",
   "version": "0.0.2",
   "description": "React hooks to make it easier to use Screen Wake Lock API",
-  "main": "index.js",
+  "main": "dist/cjs/index.js",
   "directories": {
     "example": "example"
   },
+  "type": "module",
+  "module": "dist/esm/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -33,5 +36,15 @@
   "bugs": {
     "url": "https://github.com/dlitsman/react-wake-lock/issues"
   },
-  "homepage": "https://github.com/dlitsman/react-wake-lock#readme"
+  "homepage": "https://github.com/dlitsman/react-wake-lock#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.3",
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "@types/react": "^18.2.15",
+    "react": "^18.2.0",
+    "rollup": "^3.26.3",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.1.6"
+  }
 }
