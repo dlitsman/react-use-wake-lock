@@ -10,7 +10,8 @@
   "module": "dist/esm/index.js",
   "scripts": {
     "test": "jest",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "dev": "nodemon --ignore \"dist\" -x \"npm run build\""
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@rollup/plugin-typescript": "^11.1.2",
     "@types/react": "^18.2.15",
+    "nodemon": "^3.0.1",
     "react": "^18.2.0",
     "rollup": "^3.26.3",
     "rollup-plugin-peer-deps-external": "^2.2.4",
