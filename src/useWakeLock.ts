@@ -36,6 +36,17 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
 
   const isSupported = "wakeLock" in navigator;
 
+  const optionsRef = useRef(options);
+  const onError = useCallback<Options["onError"]>((err, flow) => {
+    optionsRef.current?.onError(err, flow);
+  }, []);
+  const onLock = useCallback<Options["onLock"]>((lock) => {
+    optionsRef.current?.onLock(lock);
+  }, []);
+  const onRelease = useCallback<Options["onRelease"]>((lock) => {
+    optionsRef.current?.onRelease(lock);
+  }, []);
+
   useEffect(() => {
     // WakeLock is not supported by the browser
     if (!isSupported) {
@@ -44,7 +55,7 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
 
     const hasLockOrInFlight =
       wakeLockInFlight.current === true ||
-      (wakeLock.current != null && wakeLock.current.released === true);
+      (wakeLock.current != null && wakeLock.current.released !== true);
 
     if (enabled && isVisible && !hasLockOrInFlight) {
       wakeLockInFlight.current = true;
@@ -54,14 +65,14 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
         .then((lock) => {
           lock.addEventListener("release", () => {
             setIsLocked(false);
-            options?.onRelease(lock);
+            onRelease(lock);
           });
           wakeLock.current = lock;
           setIsLocked(true);
-          options?.onLock(lock);
+          onLock(lock);
         })
         .catch((e: Error) => {
-          options?.onError(e, "request");
+          onError(e, "request");
         })
         .finally(() => {
           wakeLockInFlight.current = false;
@@ -71,7 +82,7 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
     return () => {
       if (wakeLock.current != null && wakeLock.current.released !== true) {
         wakeLock.current.release().catch((e: Error) => {
-          options?.onError(e, "release");
+          onError(e, "release");
         });
       }
     };
@@ -80,7 +91,9 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
     isSupported,
     isVisible,
     setIsLocked,
-    options /*todo explore removing this dependecy from this effect*/,
+    onError,
+    onLock,
+    onRelease,
   ]);
 
   return useMemo(
