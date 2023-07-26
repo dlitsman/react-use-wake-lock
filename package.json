@@ -1,6 +1,6 @@
 {
   "name": "react-use-wake-lock",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "React hooks to make it easier to use Screen Wake Lock API",
   "main": "dist/cjs/index.js",
   "directories": {
