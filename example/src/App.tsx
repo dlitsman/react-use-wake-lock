@@ -1,45 +1,34 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import useWakeLock from "react-use-wake-lock";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const result = useWakeLock(count % 2 === 0, {
-    onError: (e, type) => {
-      console.error("!!!error", type, e);
+  const [shouldLock, setShouldLock] = useState(false);
+
+  const result = useWakeLock(shouldLock, {
+    onError(e, type) {
+      console.error("Wake Lock Error: ", type, e);
     },
     onLock(lock) {
-      console.info("!!!lock", lock);
+      console.info("Wake Lock Acquired: ", lock);
     },
     onRelease(lock) {
-      console.info("!!!release", lock);
+      console.info("Wake Lock Released: ", lock);
     },
   });
 
   return (
     <>
+      <h1>Locked: {result.isLocked ? "Yes" : "No"}</h1>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React (Locked: {result.isLocked ? "Yes" : "No"})</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button onClick={() => setShouldLock((value) => !value)}>
+          {shouldLock ? "Locked" : "Lock"}
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <div className="card">
+        Screen Wake Lock API supported: {result.isSupported ? "Yes" : "No"}
+      </div>
     </>
   );
 }
