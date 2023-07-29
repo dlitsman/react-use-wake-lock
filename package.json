@@ -1,16 +1,24 @@
 {
   "name": "react-use-wake-lock",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "React hooks to make it easier to use Screen Wake Lock API",
-  "main": "dist/cjs/index.js",
+  "main": "./dist/react-use-wake-lock.umd.cjs",
+  "module": "./dist/react-use-wake-lock.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/react-use-wake-lock.js",
+      "require": "./dist/react-use-wake-lock.umd.cjs"
+    }
+  },
   "directories": {
     "example": "example"
   },
   "type": "module",
-  "module": "dist/esm/index.js",
   "scripts": {
     "test": "jest",
-    "build": "rollup -c",
+    "build": "vite build",
     "dev": "nodemon --watch src -e ts -x \"npm run build\""
   },
   "repository": {
@@ -25,13 +33,11 @@
     "Lock"
   ],
   "files": [
-    "src",
     "dist"
   ],
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
   },
-  "types": "dist/esm/index.d.ts",
   "source": "src/index.ts",
   "author": "Dmitrii Litsman",
   "license": "MIT",
@@ -40,14 +46,11 @@
   },
   "homepage": "https://github.com/dlitsman/react-wake-lock#readme",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.3",
-    "@rollup/plugin-node-resolve": "^15.1.0",
-    "@rollup/plugin-typescript": "^11.1.2",
     "@types/react": "^18.2.15",
     "nodemon": "^3.0.1",
     "react": "^18.2.0",
-    "rollup": "^3.26.3",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vite": "^4.4.7",
+    "vite-plugin-dts": "^3.3.1"
   }
 }
