@@ -19,7 +19,11 @@
   "scripts": {
     "test": "jest",
     "build": "vite build",
-    "dev": "nodemon --watch src -e ts -x \"npm run build\""
+    "dev": "nodemon --watch src -e ts -x \"npm run build\"",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts)\"",
+    "checkFormat": "prettier --check \"**/*.+(js|ts)\" --ignore-path .gitignore",
+    "check": "npm run lint && npm run checkFormat"
   },
   "repository": {
     "type": "git",
@@ -48,7 +52,12 @@
   "homepage": "https://github.com/dlitsman/react-wake-lock#readme",
   "devDependencies": {
     "@types/react": "^18.2.15",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/parser": "^6.2.1",
+    "eslint": "^8.46.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "nodemon": "^3.0.1",
+    "prettier": "^3.0.0",
     "react": "^18.2.0",
     "typescript": "^5.1.6",
     "vite": "^4.4.7",

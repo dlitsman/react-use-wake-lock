@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 // Check visibility of the document to re-acquire the lock once browser is active/visible again
 function useVisibilityObserver() {
   const [isVisible, setIsVisible] = useState<boolean>(
-    document.visibilityState === "visible"
+    document.visibilityState === "visible",
   );
 
   const handleVisiblilityChange = useCallback(() => {
@@ -101,6 +101,6 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
       isSupported,
       isLocked,
     }),
-    [isLocked, isSupported]
+    [isLocked, isSupported],
   );
 }
