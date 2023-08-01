@@ -8,7 +8,7 @@ function useVisibilityObserver() {
 
   const handleVisiblilityChange = useCallback(() => {
     setIsVisible(document.visibilityState === "visible");
-  }, [  ]);
+  }, []);
 
   useEffect(() => {
     document.addEventListener("visibilitychange", handleVisiblilityChange);
