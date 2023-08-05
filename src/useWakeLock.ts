@@ -1,25 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-// Check visibility of the document to re-acquire the lock once browser is active/visible again
-function useVisibilityObserver() {
-  const [isVisible, setIsVisible] = useState<boolean>(
-    document.visibilityState === "visible",
-  );
-
-  const handleVisiblilityChange = useCallback(() => {
-    setIsVisible(document.visibilityState === "visible");
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener("visibilitychange", handleVisiblilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisiblilityChange);
-    };
-  }, [handleVisiblilityChange]);
-
-  return isVisible;
-}
+import useVisibilityObserver from "./useVisibilityObserver";
 
 type Options = {
   onError: (err: Error, flow: "request" | "release") => void;

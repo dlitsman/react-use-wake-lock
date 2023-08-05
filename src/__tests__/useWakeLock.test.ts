@@ -1,3 +1,8 @@
+const useVisibilityObserverMockFn = jest.fn();
+jest.mock("../useVisibilityObserver", () => {
+  return useVisibilityObserverMockFn;
+});
+
 import { act, renderHook } from "@testing-library/react";
 import useWakeLock from "../useWakeLock";
 
@@ -24,7 +29,11 @@ describe("useWakeLock", () => {
   beforeEach(() => {
     requestMockFn.mockClear();
     releaseMockFn.mockClear();
+    useVisibilityObserverMockFn.mockClear();
 
+    useVisibilityObserverMockFn.mockImplementation(() => {
+      return true;
+    });
     releaseMockFn.mockImplementation(() => {
       return Promise.resolve(true);
     });
@@ -38,7 +47,8 @@ describe("useWakeLock", () => {
       request: requestMockFn,
     };
   });
-  it("happy case", async () => {
+
+  it("Acquires lock when requested and feature is supported", async () => {
     const { result } = renderHook(() => useWakeLock(true));
     expect(result.current).toMatchObject({
       isSupported: true,
@@ -53,6 +63,27 @@ describe("useWakeLock", () => {
     expect(result.current).toMatchObject({
       isSupported: true,
       isLocked: true,
+    });
+  });
+
+  it("Not requesting lock if feature is not supported", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    delete (global.navigator as any).wakeLock;
+
+    const { result } = renderHook(() => useWakeLock(true));
+    expect(result.current).toMatchObject({
+      isSupported: false,
+      isLocked: false,
+    });
+    expect(requestMockFn).toBeCalledTimes(0);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: false,
+      isLocked: false,
     });
   });
 });

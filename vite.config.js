@@ -24,5 +24,9 @@ export default defineConfig({
       },
     },
   },
-  plugins: [dts()],
+  plugins: [
+    dts({
+      exclude: ["./src/__tests__", "./src/useVisibilityObserver.ts"],
+    }),
+  ],
 });
