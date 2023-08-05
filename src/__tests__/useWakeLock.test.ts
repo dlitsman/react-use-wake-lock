@@ -54,10 +54,5 @@ describe("useWakeLock", () => {
       isSupported: true,
       isLocked: true,
     });
-
-    expect(result.current).toMatchObject({
-      isSupported: true,
-      isLocked: true,
-    });
   });
 });
