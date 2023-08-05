@@ -1,8 +1,7 @@
-name: Check format and linter
+name: Run jest tests
 
 on:
   push:
-    branches: [master, main]
   pull_request:
     branches: [master, main]
 
@@ -16,4 +15,4 @@ jobs:
         with:
           node-version: "lts/*"
       - run: npm ci
-      - run: npm run check
+      - run: npm run test
