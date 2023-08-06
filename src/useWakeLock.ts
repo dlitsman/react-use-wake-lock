@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useVisibilityObserver from "./useVisibilityObserver";
 
 type Options = {
-  onError: (err: Error, flow: "request" | "release") => void;
-  onLock: (lock: WakeLockSentinel) => void;
-  onRelease: (lock: WakeLockSentinel) => void;
+  onError?: (err: Error, flow: "request" | "release") => void;
+  onLock?: (lock: WakeLockSentinel) => void;
+  onRelease?: (lock: WakeLockSentinel) => void;
 };
+
+type NonNullable<T> = Exclude<T, null | undefined>; // Remove null and undefined from T
 
 export default function useWakeLock(enabled: boolean, options?: Options) {
   const isVisible = useVisibilityObserver();
@@ -17,14 +19,20 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
   const isSupported = "wakeLock" in navigator;
 
   const optionsRef = useRef(options);
-  const onError = useCallback<Options["onError"]>((err, flow) => {
-    optionsRef.current?.onError(err, flow);
+  const onError = useCallback<NonNullable<Options["onError"]>>((err, flow) => {
+    if (optionsRef.current?.onError != null) {
+      optionsRef.current.onError(err, flow);
+    }
   }, []);
-  const onLock = useCallback<Options["onLock"]>((lock) => {
-    optionsRef.current?.onLock(lock);
+  const onLock = useCallback<NonNullable<Options["onLock"]>>((lock) => {
+    if (optionsRef.current?.onLock != null) {
+      optionsRef.current.onLock(lock);
+    }
   }, []);
-  const onRelease = useCallback<Options["onRelease"]>((lock) => {
-    optionsRef.current?.onRelease(lock);
+  const onRelease = useCallback<NonNullable<Options["onRelease"]>>((lock) => {
+    if (optionsRef.current?.onRelease != null) {
+      optionsRef.current.onRelease(lock);
+    }
   }, []);
 
   useEffect(() => {
