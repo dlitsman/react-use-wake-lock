@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useWakeLock Calls onLock option when acquired a lock 1`] = `
+[MockFunction] {
+  "calls": [
+    [
+      RequestResponseMock {
+        "callback": [Function],
+      },
+    ],
+  ],
+  "results": [
+    {
+      "type": "return",
+      "value": undefined,
+    },
+  ],
+}
+`;
