@@ -86,4 +86,203 @@ describe("useWakeLock", () => {
       isLocked: false,
     });
   });
+
+  it("Calls onLock option when acquired a lock", async () => {
+    const onLock = jest.fn();
+
+    const { result } = renderHook(() =>
+      useWakeLock(true, {
+        onLock,
+      }),
+    );
+
+    expect(onLock).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+    expect(onLock).toBeCalledTimes(1);
+    expect(onLock).toMatchSnapshot();
+  });
+
+  it("Calls onRelease when lock is released", async () => {
+    const onRelease = jest.fn();
+
+    const { result, rerender } = renderHook(() =>
+      useWakeLock(true, {
+        onRelease,
+      }),
+    );
+
+    expect(onRelease).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+
+    useVisibilityObserverMockFn.mockReturnValue(false);
+
+    act(() => {
+      rerender();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+    expect(onRelease).toBeCalledTimes(1);
+  });
+
+  it("Calls onRelease when lock is released", async () => {
+    const onRelease = jest.fn();
+
+    const { result, rerender } = renderHook(() =>
+      useWakeLock(true, {
+        onRelease,
+      }),
+    );
+
+    expect(onRelease).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+
+    useVisibilityObserverMockFn.mockReturnValue(false);
+
+    act(() => {
+      rerender();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+    expect(onRelease).toBeCalledTimes(1);
+  });
+
+  it("Calls onError when errored during request", async () => {
+    const onError = jest.fn();
+    requestMockFn.mockImplementation(() => {
+      return Promise.reject(new Error("Fake error during request"));
+    });
+
+    const { result } = renderHook(() =>
+      useWakeLock(true, {
+        onError,
+      }),
+    );
+
+    expect(onError).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+
+    expect(onError).toBeCalledTimes(1);
+    expect(onError).toBeCalledWith(
+      new Error("Fake error during request"),
+      "request",
+    );
+  });
+
+  it("Works as expected in case if no onError handled provided but hit error", async () => {
+    requestMockFn.mockImplementation(() => {
+      return Promise.reject(new Error("Fake error during request"));
+    });
+
+    const { result, rerender } = renderHook(
+      (props: { shouldLock: boolean }) => useWakeLock(props.shouldLock),
+      {
+        initialProps: { shouldLock: true },
+      },
+    );
+
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    act(() => {
+      rerender({ shouldLock: false });
+    });
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+  });
+
+  it("Calls onError when errored during release", async () => {
+    const onError = jest.fn();
+    releaseMockFn.mockImplementation(() => {
+      return Promise.reject(new Error("Fake error during release"));
+    });
+
+    const { result, rerender } = renderHook(
+      (props: { shouldLock: boolean }) =>
+        useWakeLock(props.shouldLock, {
+          onError,
+        }),
+      {
+        initialProps: { shouldLock: true },
+      },
+    );
+
+    expect(onError).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+
+    act(() => {
+      rerender({ shouldLock: false });
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(onError).toBeCalledTimes(1);
+    expect(onError).toBeCalledWith(
+      new Error("Fake error during release"),
+      "release",
+    );
+  });
 });
