@@ -21,6 +21,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  IS_GITHUB_PAGES: 1
+
 jobs:
   # Single deploy job since we're just deploying
   deploy:
