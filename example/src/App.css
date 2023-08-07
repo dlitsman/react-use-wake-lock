@@ -1,11 +1,37 @@
 #root {
   max-width: 1280px;
-  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   padding: 2rem;
   text-align: center;
+  align-items: center;
 }
 
 .card {
   padding: 2em;
+}
+
+.log-wrap {
+  width: 100%;
+  padding-top: 2em;
+}
+.log {
+  height: 200px;
+  max-width: 500px;
+  overflow: scroll;
+  background: rgb(222, 222, 222);
+  text-align: start;
+  padding: 10px;
+  margin: 0 auto;
+}
+.log .lock {
+  color: green;
+}
+.log .release {
+  color: blue;
+}
+.log .error {
+  color: red;
 }
 
