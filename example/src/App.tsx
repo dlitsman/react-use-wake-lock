@@ -12,12 +12,16 @@ function App() {
   const [log, setLog] = useState<Log[]>([]);
 
   const result = useWakeLock(shouldLock, {
-    onError(e, type) {
+    onRequestError(e, retry) {
       setLog((log) => [
         ...log,
-        { type: "error", message: `ERROR (${type}): ${e.message}` },
+        { type: "error", message: `ERROR (REQUEST): ${e.message}` },
       ]);
-      console.error("Wake Lock Error: ", type, e);
+      console.error("Wake Lock Error: REQUEST: ", e);
+      setTimeout(() => {
+        console.log("!!!retring");
+        retry();
+      }, 2000);
     },
     onLock(lock) {
       setLog((log) => [...log, { type: "lock", message: "Locked" }]);
