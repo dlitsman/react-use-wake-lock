@@ -19,9 +19,9 @@ function App() {
       ]);
       console.error("Wake Lock Error: REQUEST: ", e);
       setTimeout(() => {
-        console.log("!!!retring");
+        console.log("Wake Lock: RETRY");
         retry();
-      }, 2000);
+      }, 10000);
     },
     onLock(lock) {
       setLog((log) => [...log, { type: "lock", message: "Locked" }]);
