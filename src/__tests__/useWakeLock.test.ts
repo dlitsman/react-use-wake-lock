@@ -179,19 +179,27 @@ describe("useWakeLock", () => {
     expect(onRelease).toBeCalledTimes(1);
   });
 
-  it("Calls onError when errored during request", async () => {
-    const onError = jest.fn();
+  it("Calls onRequestError when errored during request and allows to retry", async () => {
+    let requestError;
+    let retryFunction: null | (() => void) = null;
+
+    const onRequestError = jest
+      .fn<void, [Error, () => void]>()
+      .mockImplementation((err, retry) => {
+        requestError = err;
+        retryFunction = retry;
+      });
     requestMockFn.mockImplementation(() => {
       return Promise.reject(new Error("Fake error during request"));
     });
 
     const { result } = renderHook(() =>
       useWakeLock(true, {
-        onError,
+        onRequestError,
       }),
     );
 
-    expect(onError).toBeCalledTimes(0);
+    expect(onRequestError).toBeCalledTimes(0);
     expect(requestMockFn).toBeCalledTimes(1);
 
     await act(async () => {
@@ -203,14 +211,20 @@ describe("useWakeLock", () => {
       isLocked: false,
     });
 
-    expect(onError).toBeCalledTimes(1);
-    expect(onError).toBeCalledWith(
-      new Error("Fake error during request"),
-      "request",
-    );
+    expect(onRequestError).toBeCalledTimes(1);
+    expect(requestError).toStrictEqual(new Error("Fake error during request"));
+    expect(retryFunction).toBeDefined();
+
+    await act(async () => {
+      retryFunction != null && retryFunction();
+      await jest.runAllTimersAsync();
+    });
+
+    // Calls request again
+    expect(requestMockFn).toBeCalledTimes(2);
   });
 
-  it("Works as expected in case if no onError handled provided but hit error", async () => {
+  it("Works as expected in case if no onRequestError handled provided but hit error", async () => {
     requestMockFn.mockImplementation(() => {
       return Promise.reject(new Error("Fake error during request"));
     });
@@ -238,8 +252,8 @@ describe("useWakeLock", () => {
     });
   });
 
-  it("Calls onError when errored during release", async () => {
-    const onError = jest.fn();
+  it("Calls onReleaseError when errored during release", async () => {
+    const onReleaseError = jest.fn();
     releaseMockFn.mockImplementation(() => {
       return Promise.reject(new Error("Fake error during release"));
     });
@@ -247,14 +261,14 @@ describe("useWakeLock", () => {
     const { result, rerender } = renderHook(
       (props: { shouldLock: boolean }) =>
         useWakeLock(props.shouldLock, {
-          onError,
+          onReleaseError,
         }),
       {
         initialProps: { shouldLock: true },
       },
     );
 
-    expect(onError).toBeCalledTimes(0);
+    expect(onReleaseError).toBeCalledTimes(0);
     expect(requestMockFn).toBeCalledTimes(1);
 
     await act(async () => {
@@ -279,10 +293,42 @@ describe("useWakeLock", () => {
       await jest.runAllTimersAsync();
     });
 
-    expect(onError).toBeCalledTimes(1);
-    expect(onError).toBeCalledWith(
+    expect(onReleaseError).toBeCalledTimes(1);
+    expect(onReleaseError).toBeCalledWith(
       new Error("Fake error during release"),
-      "release",
     );
+  });
+
+  it("Works as expected in case if no onReleaseError handled provided but hit error", async () => {
+    releaseMockFn.mockImplementation(() => {
+      return Promise.reject(new Error("Fake error during release"));
+    });
+
+    const { result, rerender } = renderHook(
+      (props: { shouldLock: boolean }) => useWakeLock(props.shouldLock),
+      {
+        initialProps: { shouldLock: true },
+      },
+    );
+
+    expect(requestMockFn).toBeCalledTimes(1);
+
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+
+    act(() => {
+      rerender({ shouldLock: false });
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
   });
 });
