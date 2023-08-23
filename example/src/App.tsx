@@ -33,32 +33,41 @@ function App() {
     },
   });
 
-  return (
-    <>
-      <h1>Locked: {result.isLocked ? "Yes" : "No"}</h1>
-      <div>
-        <button onClick={() => setShouldLock((value) => !value)}>
-          {shouldLock ? "Locked" : "Lock"}
-        </button>
-      </div>
+  const className =
+    shouldLock === true && result.isLocked !== true
+      ? "stateError"
+      : result.isLocked === true
+      ? "stateSuccess"
+      : "";
 
-      <div className="log-wrap">
-        Log:
-        <div className="log">
-          {log.map((v, i) => {
-            return (
-              <div className={v.type} key={i}>
-                {i} - {v.message}
-              </div>
-            );
-          })}
+  return (
+    <div className={`wrapper ${className}`}>
+      <div>
+        <h1>Locked: {result.isLocked ? "Yes" : "No"}</h1>
+        <div>
+          <button onClick={() => setShouldLock((value) => !value)}>
+            {shouldLock ? "Locked" : "Lock"}
+          </button>
+        </div>
+
+        <div className="log-wrap">
+          Log:
+          <div className="log">
+            {log.map((v, i) => {
+              return (
+                <div className={v.type} key={i}>
+                  {i} - {v.message}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="card">
+          Screen Wake Lock API supported: {result.isSupported ? "Yes" : "No"}
         </div>
       </div>
-
-      <div className="card">
-        Screen Wake Lock API supported: {result.isSupported ? "Yes" : "No"}
-      </div>
-    </>
+    </div>
   );
 }
 
