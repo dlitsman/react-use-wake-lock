@@ -56,7 +56,7 @@ function App() {
         <h1>Locked: {result.isLocked ? "Yes" : "No"}</h1>
         <div>
           <button onClick={() => setShouldLock((value) => !value)}>
-            {shouldLock ? "Locked" : "Lock"}
+            {shouldLock ? "Unlock" : "Lock"}
           </button>
         </div>
 
