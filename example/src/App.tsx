@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import useWakeLock from "react-use-wake-lock";
 
@@ -10,22 +10,30 @@ type Log = {
 function App() {
   const [shouldLock, setShouldLock] = useState(false);
   const [log, setLog] = useState<Log[]>([]);
+  const [state, setState] = useState<"error" | "success" | "passive">(
+    "passive",
+  );
+
+  useEffect(() => {
+    if (!shouldLock) {
+      setState("passive");
+    }
+  }, [shouldLock]);
 
   const result = useWakeLock(shouldLock, {
-    onRequestError(e, retry) {
+    onRequestError(e) {
+      setState("error");
       setLog((log) => [
         ...log,
         { type: "error", message: `ERROR (REQUEST): ${e.message}` },
       ]);
       console.error("Wake Lock Error: REQUEST: ", e);
-      setTimeout(() => {
-        console.log("Wake Lock: RETRY");
-        retry();
-      }, 10000);
+      setShouldLock(false);
     },
     onLock(lock) {
       setLog((log) => [...log, { type: "lock", message: "Locked" }]);
       console.info("Wake Lock Acquired: ", lock);
+      setState("success");
     },
     onRelease(lock) {
       setLog((log) => [...log, { type: "release", message: "Released" }]);
@@ -34,10 +42,12 @@ function App() {
   });
 
   const className =
-    shouldLock === true && result.isLocked !== true
-      ? "stateError"
-      : result.isLocked === true
+    state === "success"
       ? "stateSuccess"
+      : state === "error"
+      ? "stateError"
+      : shouldLock === true && result.isLocked !== true
+      ? "statePending"
       : "";
 
   return (

@@ -51,6 +51,9 @@
 .stateError {
   background-color: rgb(255, 213, 213);
 }
+.statePending {
+  background-color: rgb(254, 211, 136);
+}
 .stateSuccess {
   background-color: rgb(237, 255, 237);
 }
