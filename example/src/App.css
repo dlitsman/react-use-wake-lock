@@ -1,10 +1,11 @@
 #root {
   width: 100%;
   display: flex;
+  flex: 1;
   flex-direction: column;
-  padding: 2rem;
-  text-align: center;
+  align-self: stretch;
   align-items: center;
+  justify-content: center;
 }
 
 .card {
@@ -34,3 +35,25 @@
   color: red;
 }
 
+
+.wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  box-sizing: border-box;
+  flex: 1;
+}
+.stateError {
+  background-color: rgb(255, 213, 213);
+}
+.statePending {
+  background-color: rgb(254, 211, 136);
+}
+.stateSuccess {
+  background-color: rgb(237, 255, 237);
+}
