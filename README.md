@@ -3,7 +3,12 @@
 
 ### 1. Installation
 
+```
+npm i react-use-wake-lock
+```
+
 ### 2. Example
+
 
 ### 3. API
 
