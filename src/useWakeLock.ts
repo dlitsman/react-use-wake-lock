@@ -14,7 +14,14 @@ type Options = {
 
 type NonNullable<T> = Exclude<T, null | undefined>; // Remove null and undefined from T
 
-export default function useWakeLock(enabled: boolean, options?: Options) {
+export type UseWakeLockResult = {
+  isSupported: boolean;
+  isLocked: boolean;
+  request: () => void;
+  release: () => void;
+};
+
+export default function useWakeLock(options?: Options): UseWakeLockResult {
   const isVisible = useVisibilityObserver();
   const [isLocked, setIsLocked] = useState(false);
 
@@ -46,17 +53,27 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
   }, []);
 
   const request = useCallback(async () => {
-    if (isSupported) {
+    if (!isSupported) {
       recoverableError("WakeLock is not supported by the browser");
       return;
     }
 
+    if (wakeLockInFlight.current === true) {
+      recoverableError("WakeLock request is in progress. noop");
+      return;
+    }
+
+    if (lock != null && lock.released === false) {
+      recoverableError("Already have a lock. noop");
+      return;
+    }
+
     try {
+      wakeLockInFlight.current = true;
       const wakeLock = await navigator.wakeLock.request("screen");
 
       wakeLock.addEventListener("release", () => {
         setIsLocked(false);
-        setLock(null);
         onRelease(wakeLock);
       });
 
@@ -67,13 +84,15 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
       if (err instanceof Error) {
         onRequestError(err);
       } else {
-        onRequestError(new Error(`Unknown error type`));
+        onRequestError(new Error(`Unknown error type on request`));
       }
+    } finally {
+      wakeLockInFlight.current = false;
     }
-  }, [isSupported, onLock, onRelease, onRequestError]);
+  }, [isSupported, lock, onLock, onRelease, onRequestError]);
 
   const release = useCallback(async () => {
-    if (isSupported) {
+    if (!isSupported) {
       recoverableError("WakeLock is not supported by the browser");
       return;
     }
@@ -87,12 +106,12 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
       await lock.release();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        onRequestError(err);
+        onReleaseError(err);
       } else {
-        onRequestError(new Error(`Unknown error type`));
+        onReleaseError(new Error(`Unknown error type on release`));
       }
     }
-  }, [isSupported, lock, onRequestError]);
+  }, [isSupported, lock, onReleaseError]);
 
   useEffect(() => {
     // WakeLock is not supported by the browser
@@ -106,24 +125,12 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
       lock.released &&
       wakeLockInFlight.current !== true
     ) {
-      request()
-        .then(() => {
-          wakeLockInFlight.current = false;
-        })
-        .catch(() => {});
+      request().catch((e: unknown) => {
+        const err = (e as Error).message;
+        recoverableError(`Unknown error during auto-renewal: ${err} `);
+      });
     }
-  }, [
-    enabled,
-    isSupported,
-    isVisible,
-    setIsLocked,
-    onLock,
-    onRelease,
-    onRequestError,
-    onReleaseError,
-    lock,
-    request,
-  ]);
+  }, [isSupported, isVisible, lock, request]);
 
   return useMemo(
     () => ({
