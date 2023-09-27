@@ -72,6 +72,9 @@ function App() {
             })}
           </div>
         </div>
+        <div className="card">
+          <button onClick={() => setLog([])}>Clear log</button>
+        </div>
 
         <div className="card">
           Screen Wake Lock API supported: {result.isSupported ? "Yes" : "No"}
