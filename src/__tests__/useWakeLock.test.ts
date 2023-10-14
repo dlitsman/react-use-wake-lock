@@ -67,26 +67,29 @@ describe("useWakeLock", () => {
     });
   });
 
-  // it("Not requesting lock if feature is not supported", async () => {
-  //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-  //   delete (global.navigator as any).wakeLock;
+  it("Not requesting lock if feature is not supported", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+    delete (global.navigator as any).wakeLock;
 
-  //   const { result } = renderHook(() => useWakeLock(true));
-  //   expect(result.current).toMatchObject({
-  //     isSupported: false,
-  //     isLocked: false,
-  //   });
-  //   expect(requestMockFn).toBeCalledTimes(0);
+    const { result } = renderHook(() => useWakeLock());
+    expect(result.current).toMatchObject({
+      isSupported: false,
+      isLocked: false,
+    });
+    expect(requestMockFn).toBeCalledTimes(0);
 
-  //   await act(async () => {
-  //     await jest.runAllTimersAsync();
-  //   });
+    await act(async () => {
+      result.current.request();
+      await jest.runAllTimersAsync();
+    });
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: false,
-  //     isLocked: false,
-  //   });
-  // });
+    expect(requestMockFn).toBeCalledTimes(0);
+
+    expect(result.current).toMatchObject({
+      isSupported: false,
+      isLocked: false,
+    });
+  });
 
   // it("Calls onLock option when acquired a lock", async () => {
   //   const onLock = jest.fn();
