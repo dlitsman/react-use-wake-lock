@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useVisibilityObserver from "./useVisibilityObserver";
-
-const recoverableError = (error: string) => {
-  console.warn(`[react-use-wake-lock]: ${error}`);
-};
+import recoverableError from "./recoverableError";
 
 type Options = {
   onRequestError?: (err: Error) => void;
