@@ -26,7 +26,10 @@ const requestMockFn = jest.fn<Promise<RequestResponseMock>, []>();
 describe("useWakeLock", () => {
   jest.useFakeTimers();
 
+  let wakeLockInternal: Promise<RequestResponseMock> | null = null;
+
   beforeEach(() => {
+    wakeLockInternal = null;
     requestMockFn.mockClear();
     releaseMockFn.mockClear();
     useVisibilityObserverMockFn.mockClear();
@@ -39,7 +42,8 @@ describe("useWakeLock", () => {
     });
 
     requestMockFn.mockImplementation(() => {
-      return Promise.resolve(new RequestResponseMock());
+      wakeLockInternal = Promise.resolve(new RequestResponseMock());
+      return wakeLockInternal;
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -48,7 +52,7 @@ describe("useWakeLock", () => {
     };
   });
 
-  it.only("Acquires lock when requested and feature is supported", async () => {
+  it("Acquires lock when requested and feature is supported", async () => {
     const { result } = renderHook(() => useWakeLock());
     expect(result.current).toMatchObject({
       isSupported: true,
@@ -91,97 +95,115 @@ describe("useWakeLock", () => {
     });
   });
 
-  // it("Calls onLock option when acquired a lock", async () => {
-  //   const onLock = jest.fn();
+  it("Calls onLock option when acquired a lock", async () => {
+    const onLock = jest.fn();
 
-  //   const { result } = renderHook(() =>
-  //     useWakeLock(true, {
-  //       onLock,
-  //     }),
-  //   );
+    const { result } = renderHook(() =>
+      useWakeLock({
+        onLock,
+      }),
+    );
 
-  //   expect(onLock).toBeCalledTimes(0);
-  //   expect(requestMockFn).toBeCalledTimes(1);
+    act(() => {
+      result.current.request();
+    });
 
-  //   await act(async () => {
-  //     await jest.runAllTimersAsync();
-  //   });
+    expect(onLock).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: true,
-  //     isLocked: true,
-  //   });
-  //   expect(onLock).toBeCalledTimes(1);
-  //   expect(onLock).toMatchSnapshot();
-  // });
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
 
-  // it("Calls onRelease when lock is released", async () => {
-  //   const onRelease = jest.fn();
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+    expect(onLock).toBeCalledTimes(1);
+    expect(onLock).toMatchSnapshot();
+  });
 
-  //   const { result, rerender } = renderHook(() =>
-  //     useWakeLock(true, {
-  //       onRelease,
-  //     }),
-  //   );
+  it("Calls onRelease when lock is released", async () => {
+    const onRelease = jest.fn();
 
-  //   expect(onRelease).toBeCalledTimes(0);
-  //   expect(requestMockFn).toBeCalledTimes(1);
+    const { result, rerender } = renderHook(() =>
+      useWakeLock({
+        onRelease,
+      }),
+    );
 
-  //   await act(async () => {
-  //     await jest.runAllTimersAsync();
-  //   });
+    act(() => {
+      result.current.request();
+    });
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: true,
-  //     isLocked: true,
-  //   });
+    expect(onRelease).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
 
-  //   useVisibilityObserverMockFn.mockReturnValue(false);
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
 
-  //   act(() => {
-  //     rerender();
-  //   });
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: true,
-  //     isLocked: false,
-  //   });
-  //   expect(onRelease).toBeCalledTimes(1);
-  // });
+    await act(async () => {
+      const lock = await wakeLockInternal;
+      await lock?.release();
+    });
 
-  // it("Calls onRelease when lock is released", async () => {
-  //   const onRelease = jest.fn();
+    act(() => {
+      rerender();
+    });
 
-  //   const { result, rerender } = renderHook(() =>
-  //     useWakeLock(true, {
-  //       onRelease,
-  //     }),
-  //   );
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+    expect(onRelease).toBeCalledTimes(1);
+  });
 
-  //   expect(onRelease).toBeCalledTimes(0);
-  //   expect(requestMockFn).toBeCalledTimes(1);
+  it("Calls onRelease when lock is released", async () => {
+    const onRelease = jest.fn();
 
-  //   await act(async () => {
-  //     await jest.runAllTimersAsync();
-  //   });
+    const { result, rerender } = renderHook(() =>
+      useWakeLock({
+        onRelease,
+      }),
+    );
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: true,
-  //     isLocked: true,
-  //   });
+    act(() => {
+      result.current.request();
+    });
 
-  //   useVisibilityObserverMockFn.mockReturnValue(false);
+    expect(onRelease).toBeCalledTimes(0);
+    expect(requestMockFn).toBeCalledTimes(1);
 
-  //   act(() => {
-  //     rerender();
-  //   });
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
 
-  //   expect(result.current).toMatchObject({
-  //     isSupported: true,
-  //     isLocked: false,
-  //   });
-  //   expect(onRelease).toBeCalledTimes(1);
-  // });
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: true,
+    });
+
+    await act(async () => {
+      const lock = await wakeLockInternal;
+      await lock?.release();
+    });
+
+    act(() => {
+      rerender();
+    });
+
+    expect(result.current).toMatchObject({
+      isSupported: true,
+      isLocked: false,
+    });
+    expect(onRelease).toBeCalledTimes(1);
+  });
 
   // it("Calls onRequestError when errored during request and allows to retry", async () => {
   //   let requestError;
