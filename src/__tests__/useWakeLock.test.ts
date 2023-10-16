@@ -587,4 +587,107 @@ describe("useWakeLock", () => {
       isLocked: false,
     });
   });
+
+  describe("auto-renew", () => {
+    it("auto-renews lock when visibility changes", async () => {
+      const onLock = jest.fn();
+      const onRelease = jest.fn();
+
+      const { result, rerender } = renderHook(() =>
+        useWakeLock({
+          onLock,
+          onRelease,
+        }),
+      );
+
+      act(() => {
+        result.current.request();
+      });
+
+      expect(onLock).toBeCalledTimes(0);
+      expect(onRelease).toBeCalledTimes(0);
+      expect(requestMockFn).toBeCalledTimes(1);
+
+      await act(async () => {
+        await jest.runAllTimersAsync();
+      });
+
+      expect(result.current).toMatchObject({
+        isSupported: true,
+        isLocked: true,
+      });
+      expect(onLock).toBeCalledTimes(1);
+
+      // mimic going off-screen
+      await act(async () => {
+        useVisibilityObserverMockFn.mockReturnValue(false);
+        const lock = await wakeLockInternal;
+        await lock?.release();
+
+        await jest.runAllTimersAsync();
+      });
+
+      expect(onRelease).toBeCalledTimes(1);
+
+      // mimic going back online
+      await act(async () => {
+        useVisibilityObserverMockFn.mockReturnValue(true);
+
+        rerender();
+        await jest.runAllTimersAsync();
+      });
+
+      expect(onLock).toBeCalledTimes(2);
+    });
+
+    it("Doesn't auto-renew when released manually", async () => {
+      const onLock = jest.fn();
+      const onRelease = jest.fn();
+
+      const { result, rerender } = renderHook(() =>
+        useWakeLock({
+          onLock,
+          onRelease,
+        }),
+      );
+
+      act(() => {
+        result.current.request();
+      });
+
+      expect(onLock).toBeCalledTimes(0);
+      expect(onRelease).toBeCalledTimes(0);
+      expect(requestMockFn).toBeCalledTimes(1);
+
+      await act(async () => {
+        await jest.runAllTimersAsync();
+      });
+
+      expect(result.current).toMatchObject({
+        isSupported: true,
+        isLocked: true,
+      });
+      expect(onLock).toBeCalledTimes(1);
+
+      // mimic going off-screen but release manually
+      await act(async () => {
+        useVisibilityObserverMockFn.mockReturnValue(false);
+        result.current.release();
+
+        await jest.runAllTimersAsync();
+      });
+
+      expect(onRelease).toBeCalledTimes(1);
+
+      // mimic going back online
+      await act(async () => {
+        useVisibilityObserverMockFn.mockReturnValue(true);
+
+        rerender();
+        await jest.runAllTimersAsync();
+      });
+
+      expect(onLock).toBeCalledTimes(1);
+    });
+  });
 });

@@ -23,6 +23,7 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
   const [isLocked, setIsLocked] = useState(false);
 
   const wakeLockInFlight = useRef(false);
+  const wakeLockReleasedManually = useRef(false);
   const [lock, setLock] = useState<WakeLockSentinel | null>(null);
 
   const isSupported = "wakeLock" in navigator;
@@ -65,6 +66,8 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
       return;
     }
 
+    wakeLockReleasedManually.current = false;
+
     try {
       wakeLockInFlight.current = true;
       const wakeLock = await navigator.wakeLock.request("screen");
@@ -100,6 +103,7 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
     }
 
     try {
+      wakeLockReleasedManually.current = true;
       await lock.release();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -120,12 +124,9 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
       lock != null &&
       isVisible &&
       lock.released &&
-      wakeLockInFlight.current !== true
+      wakeLockReleasedManually.current !== true
     ) {
-      request().catch((e: unknown) => {
-        const err = (e as Error).message;
-        recoverableError(`Unknown error during auto-renewal: ${err} `);
-      });
+      void request();
     }
   }, [isSupported, isVisible, lock, request]);
 
