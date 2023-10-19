@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useVisibilityObserver from "./useVisibilityObserver";
+import recoverableError from "./recoverableError";
 
 type Options = {
-  onRequestError?: (err: Error, retry: () => void) => void;
+  onRequestError?: (err: Error) => void;
   onReleaseError?: (err: Error) => void;
   onLock?: (lock: WakeLockSentinel) => void;
   onRelease?: (lock: WakeLockSentinel) => void;
@@ -10,28 +11,29 @@ type Options = {
 
 type NonNullable<T> = Exclude<T, null | undefined>; // Remove null and undefined from T
 
-export default function useWakeLock(enabled: boolean, options?: Options) {
+export type UseWakeLockResult = {
+  isSupported: boolean;
+  isLocked: boolean;
+  request: () => void;
+  release: () => void;
+};
+
+export default function useWakeLock(options?: Options): UseWakeLockResult {
   const isVisible = useVisibilityObserver();
   const [isLocked, setIsLocked] = useState(false);
-  const [retryNumber, setRetryNumber] = useState(0);
-  const retry = useCallback(() => {
-    setRetryNumber((retryNumber) => retryNumber + 1);
-  }, [setRetryNumber]);
 
   const wakeLockInFlight = useRef(false);
-  const wakeLock = useRef<WakeLockSentinel>();
+  const wakeLockReleasedManually = useRef(false);
+  const [lock, setLock] = useState<WakeLockSentinel | null>(null);
 
   const isSupported = "wakeLock" in navigator;
 
   const optionsRef = useRef(options);
-  const onRequestError = useCallback<(err: Error) => void>(
-    (err) => {
-      if (optionsRef.current?.onRequestError != null) {
-        optionsRef.current.onRequestError(err, retry);
-      }
-    },
-    [retry],
-  );
+  const onRequestError = useCallback<(err: Error) => void>((err) => {
+    if (optionsRef.current?.onRequestError != null) {
+      optionsRef.current.onRequestError(err);
+    }
+  }, []);
   const onReleaseError = useCallback<(err: Error) => void>((err) => {
     if (optionsRef.current?.onReleaseError != null) {
       optionsRef.current.onReleaseError(err);
@@ -48,62 +50,93 @@ export default function useWakeLock(enabled: boolean, options?: Options) {
     }
   }, []);
 
+  const request = useCallback(async () => {
+    if (!isSupported) {
+      recoverableError("WakeLock is not supported by the browser");
+      return;
+    }
+
+    if (wakeLockInFlight.current === true) {
+      recoverableError("WakeLock request is in progress. noop");
+      return;
+    }
+
+    if (lock != null && lock.released === false) {
+      recoverableError("Already have a lock. noop");
+      return;
+    }
+
+    wakeLockReleasedManually.current = false;
+
+    try {
+      wakeLockInFlight.current = true;
+      const wakeLock = await navigator.wakeLock.request("screen");
+
+      wakeLock.addEventListener("release", () => {
+        setIsLocked(false);
+        onRelease(wakeLock);
+      });
+
+      setLock(wakeLock);
+      setIsLocked(true);
+      onLock(wakeLock);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        onRequestError(err);
+      } else {
+        onRequestError(new Error(`Unknown error type on request`));
+      }
+    } finally {
+      wakeLockInFlight.current = false;
+    }
+  }, [isSupported, lock, onLock, onRelease, onRequestError]);
+
+  const release = useCallback(async () => {
+    if (!isSupported) {
+      recoverableError("WakeLock is not supported by the browser");
+      return;
+    }
+
+    if (lock == null) {
+      recoverableError("Trying to release lock without having one: noop");
+      return;
+    }
+
+    try {
+      wakeLockReleasedManually.current = true;
+      await lock.release();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        onReleaseError(err);
+      } else {
+        onReleaseError(new Error(`Unknown error type on release`));
+      }
+    }
+  }, [isSupported, lock, onReleaseError]);
+
   useEffect(() => {
     // WakeLock is not supported by the browser
     if (!isSupported) {
       return;
     }
 
-    const hasLockOrInFlight =
-      wakeLockInFlight.current === true ||
-      (wakeLock.current != null && wakeLock.current.released !== true);
-
-    if (enabled && isVisible && !hasLockOrInFlight) {
-      wakeLockInFlight.current = true;
-
-      navigator.wakeLock
-        .request("screen")
-        .then((lock) => {
-          lock.addEventListener("release", () => {
-            setIsLocked(false);
-            onRelease(lock);
-          });
-          wakeLock.current = lock;
-          setIsLocked(true);
-          onLock(lock);
-        })
-        .catch((e: Error) => {
-          onRequestError(e);
-        })
-        .finally(() => {
-          wakeLockInFlight.current = false;
-        });
+    if (
+      lock != null &&
+      isVisible &&
+      lock.released &&
+      wakeLockReleasedManually.current !== true
+    ) {
+      void request();
     }
-
-    return () => {
-      if (wakeLock.current != null && wakeLock.current.released !== true) {
-        wakeLock.current.release().catch((e: Error) => {
-          onReleaseError(e);
-        });
-      }
-    };
-  }, [
-    enabled,
-    isSupported,
-    isVisible,
-    setIsLocked,
-    onLock,
-    onRelease,
-    retryNumber, // force retry logic
-    onRequestError,
-    onReleaseError,
-  ]);
+  }, [isSupported, isVisible, lock, request]);
 
   return useMemo(
     () => ({
       isSupported,
       isLocked,
+      request,
+      release,
     }),
-    [isLocked, isSupported],
+    [isLocked, isSupported, release, request],
   );
 }

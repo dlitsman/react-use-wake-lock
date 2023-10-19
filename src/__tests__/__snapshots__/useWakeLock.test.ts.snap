@@ -6,6 +6,7 @@ exports[`useWakeLock Calls onLock option when acquired a lock 1`] = `
     [
       RequestResponseMock {
         "callback": [Function],
+        "released": false,
       },
     ],
   ],
