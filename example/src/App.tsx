@@ -9,6 +9,16 @@ type Log = {
 };
 
 function App() {
+  const queryParameters = new URLSearchParams(window.location.search);
+
+  return queryParameters.get("min") ? (
+    <MinimalExampleComponent />
+  ) : (
+    <FullApiExample />
+  );
+}
+
+function FullApiExample() {
   const [log, setLog] = useState<Log[]>([]);
 
   const addLogMessage = useCallback(
@@ -89,6 +99,20 @@ function App() {
           Screen Wake Lock API supported: {isSupported ? "Yes" : "No"}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MinimalExampleComponent() {
+  const { isSupported, isLocked, request, release } = useWakeLock();
+
+  return (
+    <div>
+      <h3>Screen Wake Lock API supported: {isSupported ? "Yes" : "No"}</h3>
+      <h3>Locked: {`${isLocked ? "Yes" : "No"}`}</h3>
+      <button type="button" onClick={() => (isLocked ? release() : request())}>
+        {isLocked ? "Release" : "Request"}
+      </button>
     </div>
   );
 }
