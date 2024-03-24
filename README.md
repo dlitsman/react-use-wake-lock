@@ -16,7 +16,7 @@ Easily integrate [Screen Wake Lock API](https://developer.mozilla.org/en-US/docs
 
 ### Demo
 
-- [Live Demo](https://dlitsman.github.io/react-wake-lock/)
+- [Live Demo](https://dlitsman.github.io/react-use-wake-lock/)
 
 ### Installation
 
@@ -30,7 +30,7 @@ or
 yarn add react-use-wake-lock
 ```
 
-### [Minimal example](https://dlitsman.github.io/react-wake-lock/?min=1)
+### [Minimal example](https://dlitsman.github.io/react-use-wake-lock/?min=1)
 
 ```ts
 import useWakeLock from "react-use-wake-lock";
