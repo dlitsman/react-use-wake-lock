@@ -28,9 +28,7 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
   const isSupported = "wakeLock" in navigator;
 
   const optionsRef = useRef(options);
-  const onError = useCallback<
-    (err: Error, type: "request" | "release") => void
-  >((err, type) => {
+  const onError = useCallback<NonNullable<Options["onError"]>>((err, type) => {
     if (optionsRef.current?.onError != null) {
       optionsRef.current.onError(err, type);
     }
