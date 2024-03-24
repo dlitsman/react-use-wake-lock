@@ -1,14 +1,34 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import useWakeLock from "react-use-wake-lock";
 
 type Log = {
   type: "error" | "lock" | "release";
   message: string;
+  time: string;
 };
 
 function App() {
   const [log, setLog] = useState<Log[]>([]);
+
+  const addLogMessage = useCallback(
+    (message: string, messageType: "lock" | "release" | "error") => {
+      const date = new Date();
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+
+      setLog((log) => [
+        ...log,
+        { type: messageType, message, time: `${hours}:${minutes}:${seconds}` },
+      ]);
+
+      if (messageType === "error") {
+        console.error(message);
+      }
+    },
+    [],
+  );
 
   const [counter, setCounter] = useState(0);
 
@@ -24,19 +44,16 @@ function App() {
   }, []);
 
   const { request, release, isLocked, isSupported } = useWakeLock({
-    onRequestError(e) {
-      setLog((log) => [
-        ...log,
-        { type: "error", message: `ERROR (REQUEST): ${e.message}` },
-      ]);
+    onError(e, type) {
+      addLogMessage(`ERROR (${type}) ${e.message}`, "error");
       console.error("Wake Lock Error: REQUEST: ", e);
     },
     onLock(lock) {
-      setLog((log) => [...log, { type: "lock", message: "Locked" }]);
       console.info("Wake Lock Acquired: ", lock);
+      addLogMessage(`Locked`, "lock");
     },
     onRelease(lock) {
-      setLog((log) => [...log, { type: "release", message: "Released" }]);
+      addLogMessage(`Released`, "release");
       console.info("Wake Lock Released: ", lock);
     },
   });
@@ -58,7 +75,7 @@ function App() {
             {log.map((v, i) => {
               return (
                 <div className={v.type} key={i}>
-                  {i} - {v.message}
+                  {v.time} - {v.message}
                 </div>
               );
             })}

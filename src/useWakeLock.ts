@@ -3,8 +3,7 @@ import useVisibilityObserver from "./useVisibilityObserver";
 import recoverableError from "./recoverableError";
 
 type Options = {
-  onRequestError?: (err: Error) => void;
-  onReleaseError?: (err: Error) => void;
+  onError?: (err: Error, type: "request" | "release") => void;
   onLock?: (lock: WakeLockSentinel) => void;
   onRelease?: (lock: WakeLockSentinel) => void;
 };
@@ -29,14 +28,11 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
   const isSupported = "wakeLock" in navigator;
 
   const optionsRef = useRef(options);
-  const onRequestError = useCallback<(err: Error) => void>((err) => {
-    if (optionsRef.current?.onRequestError != null) {
-      optionsRef.current.onRequestError(err);
-    }
-  }, []);
-  const onReleaseError = useCallback<(err: Error) => void>((err) => {
-    if (optionsRef.current?.onReleaseError != null) {
-      optionsRef.current.onReleaseError(err);
+  const onError = useCallback<
+    (err: Error, type: "request" | "release") => void
+  >((err, type) => {
+    if (optionsRef.current?.onError != null) {
+      optionsRef.current.onError(err, type);
     }
   }, []);
   const onLock = useCallback<NonNullable<Options["onLock"]>>((lock) => {
@@ -82,14 +78,14 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
       onLock(wakeLock);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        onRequestError(err);
+        onError(err, "request");
       } else {
-        onRequestError(new Error(`Unknown error type on request`));
+        onError(new Error(`Unknown error type on request`), "request");
       }
     } finally {
       wakeLockInFlight.current = false;
     }
-  }, [isSupported, lock, onLock, onRelease, onRequestError]);
+  }, [isSupported, lock, onLock, onRelease, onError]);
 
   const release = useCallback(async () => {
     if (!isSupported) {
@@ -107,13 +103,14 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
       await lock.release();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        onReleaseError(err);
+        onError(err, "release");
       } else {
-        onReleaseError(new Error(`Unknown error type on release`));
+        onError(new Error(`Unknown error type on release`), "release");
       }
     }
-  }, [isSupported, lock, onReleaseError]);
+  }, [isSupported, lock, onError]);
 
+  // Automatically re-aquire lock in case if it was lost by losing visibility
   useEffect(() => {
     // WakeLock is not supported by the browser
     if (!isSupported) {
