@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useVisibilityObserver from "./useVisibilityObserver";
 import recoverableError from "./recoverableError";
 
-type ErrorType = "request" | "release";
-
 type Options = {
-  onError?: (err: Error, type: ErrorType) => void;
+  onError?: (err: Error, type: "request" | "release") => void;
   onLock?: (lock: WakeLockSentinel) => void;
   onRelease?: (lock: WakeLockSentinel) => void;
 };
@@ -30,14 +28,13 @@ export default function useWakeLock(options?: Options): UseWakeLockResult {
   const isSupported = "wakeLock" in navigator;
 
   const optionsRef = useRef(options);
-  const onError = useCallback<(err: Error, type: ErrorType) => void>(
-    (err, type) => {
-      if (optionsRef.current?.onError != null) {
-        optionsRef.current.onError(err, type);
-      }
-    },
-    [],
-  );
+  const onError = useCallback<
+    (err: Error, type: "request" | "release") => void
+  >((err, type) => {
+    if (optionsRef.current?.onError != null) {
+      optionsRef.current.onError(err, type);
+    }
+  }, []);
   const onLock = useCallback<NonNullable<Options["onLock"]>>((lock) => {
     if (optionsRef.current?.onLock != null) {
       optionsRef.current.onLock(lock);
